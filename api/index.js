@@ -5,7 +5,6 @@ module.exports = async (req, res) => {
     const FIREBASE_KEY = process.env.FIREBASE_KEY;
     const FIREBASE_URL = `https://firestore.googleapis.com/v1/projects/projects-general-fed41/databases/(default)/documents/users?key=${FIREBASE_KEY}`;
 
-    // --- INTERFACE PROFISSIONAL PARA NAVEGADOR ---
     if (!phone) {
         res.setHeader('Content-Type', 'text/html');
         return res.status(200).send(`
