@@ -24,9 +24,9 @@ module.exports = async (req, res) => {
             </head>
             <body>
                 <div class="card">
-                    <h2> CONNECT - API</h2>
+                    <h2> WHATS-CONNECT-API</h2>
                     <div class="status">● SISTEMA OPERACIONAL</div>
-                    <p class="info">Aguardando requisição do dispositivo Termux...</p>
+                    <p class="info">Ativo</p>
                 </div>
             </body>
             </html>
