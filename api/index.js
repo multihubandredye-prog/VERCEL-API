@@ -14,7 +14,7 @@ module.exports = async (req, res) => {
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>WCA System | API Status</title>
+                <title>WHATS-CONNECT-API System | API Status</title>
                 <style>
                     body { font-family: sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
                     .card { background: #1e293b; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); text-align: center; border-top: 4px solid #10b981; }
@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
             </head>
             <body>
                 <div class="card">
-                    <h2>WCA CONNECT - API</h2>
+                    <h2> CONNECT - API</h2>
                     <div class="status">● SISTEMA OPERACIONAL</div>
                     <p class="info">Aguardando requisição do dispositivo Termux...</p>
                 </div>
