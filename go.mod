@@ -1,6 +1,2 @@
-{
-  "version": 2,
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/api/index.go" }
-  ]
-}
+module vercel-api
+go 1.20
