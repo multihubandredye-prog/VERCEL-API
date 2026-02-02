@@ -5,22 +5,14 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
 )
 
-// Estruturas para mapear o JSON do Firebase
 type FirebaseResponse struct {
 	Documents []struct {
 		Fields struct {
-			Phone struct {
-				StringValue string `json:"stringValue"`
-			} `json:"phone"`
-			Name struct {
-				StringValue string `json:"stringValue"`
-			} `json:"name"`
-			ProjectExpiration struct {
-				StringValue string `json:"stringValue"`
-			} `json:"project_expiration"`
+			Phone             struct{ StringValue string `json:"stringValue"` } `json:"phone"`
+			Name              struct{ StringValue string `json:"stringValue"` } `json:"name"`
+			ProjectExpiration struct{ StringValue string `json:"stringValue"` } `json:"project_expiration"`
 		} `json:"fields"`
 	} `json:"documents"`
 }
@@ -30,7 +22,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	firebaseKey := os.Getenv("FIREBASE_KEY")
 	firebaseURL := fmt.Sprintf("https://firestore.googleapis.com/v1/projects/projects-general-fed41/databases/(default)/documents/users?key=%s", firebaseKey)
 
-	// Se não houver telefone, exibe a página HTML elegante
 	if phone == "" {
 		w.Header().Set("Content-Type", "text/html")
 		fmt.Fprintf(w, `
@@ -41,11 +32,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>WHATS-CONNECT-API</title>
                 <style>
-                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-                    .card { background: #1e293b; padding: 3rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; border-bottom: 5px solid #10b981; min-width: 300px; }
-                    h2 { margin: 0; color: #f8fafc; letter-spacing: 1px; font-size: 1.5rem; }
-                    .status-box { margin-top: 25px; padding: 10px; background: rgba(16, 185, 129, 0.1); border-radius: 50px; display: inline-block; padding: 10px 25px; }
-                    .status-dot { color: #10b981; font-size: 1.2rem; margin-right: 8px; }
+                    body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+                    .card { background: #1e293b; padding: 3rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; border-bottom: 5px solid #10b981; }
+                    h2 { margin: 0; color: #f8fafc; font-size: 1.5rem; letter-spacing: 1px; }
+                    .status-box { margin-top: 25px; background: rgba(16, 185, 129, 0.1); border-radius: 50px; display: inline-block; padding: 10px 25px; }
+                    .status-dot { color: #10b981; margin-right: 8px; font-size: 1.2rem; }
                     .info { color: #64748b; font-size: 0.85rem; margin-top: 30px; text-transform: uppercase; letter-spacing: 2px; }
                 </style>
             </head>
@@ -64,11 +55,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Consulta ao Firebase
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(firebaseURL)
+	resp, err := http.Get(firebaseURL)
 	if err != nil {
-		http.Error(w, "Erro na conexão", 500)
+		http.Error(w, "Erro na ponte", 500)
 		return
 	}
 	defer resp.Body.Close()
@@ -76,7 +65,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	var data FirebaseResponse
 	json.NewDecoder(resp.Body).Decode(&data)
 
-	// Busca o usuário
 	for _, doc := range data.Documents {
 		if doc.Fields.Phone.StringValue == phone {
 			w.Header().Set("Content-Type", "application/json")
@@ -89,7 +77,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Caso não encontre
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(404)
 	json.NewEncoder(w).Encode(map[string]string{"status": "bloqueado"})
