@@ -8,10 +8,12 @@ module.exports = (req, res) => {
   const phone = req.query.phone;
   const FIREBASE_KEY = process.env.FIREBASE_KEY;
 
+  // Resposta padrão sem número
   if (!phone) {
     return res.end(JSON.stringify({ status: "API ONLINE | WCA CONNECT" }));
   }
 
+  // Consulta exata para o Firestore
   const query = JSON.stringify({
     structuredQuery: {
       from: [{ collectionId: "users" }],
@@ -29,24 +31,26 @@ module.exports = (req, res) => {
   const url = `https://firestore.googleapis.com/v1/projects/projects-general-fed41/databases/(default)/documents:runQuery?key=${FIREBASE_KEY}&query=${encodeURIComponent(query)}`;
 
   https.get(url, (resp) => {
-    let data = '';
-    resp.on('data', chunk => data += chunk);
+    let dadosBrutos = '';
+    resp.on('data', pedaco => dadosBrutos += pedaco);
     resp.on('end', () => {
       try {
-        const resultado = JSON.parse(data);
+        const resultado = JSON.parse(dadosBrutos);
 
-        // ✅ LÊ EXATAMENTE O FORMATO QUE O FIRESTORE RETORNA
-        if (!resultado || !Array.isArray(resultado) || !resultado[0]?.document) {
+        // ✅ VERIFICA E LÊ EXATAMENTE COMO O FIRESTORE DEVOLVE
+        if (!Array.isArray(resultado) || resultado.length === 0 || !resultado[0].document) {
           return res.end(JSON.stringify({ status: "bloqueado" }));
         }
 
         const campos = resultado[0].document.fields;
 
-        const nome = campos?.name?.stringValue || '';
+        // Pega os valores com segurança
+        const nome = campos?.name?.stringValue?.trim() || '';
         const vip = campos?.vip?.booleanValue === true;
-        const expiracao = campos?.project_expiration?.stringValue || '';
+        const expiracao = campos?.project_expiration?.stringValue?.trim() || '';
 
-        if (nome && vip && expiracao) {
+        // Valida todas as condições
+        if (nome !== '' && vip === true && expiracao !== '') {
           return res.end(JSON.stringify({
             nome: nome,
             expiracao: expiracao,
@@ -54,12 +58,17 @@ module.exports = (req, res) => {
           }));
         }
 
-        res.end(JSON.stringify({ status: "bloqueado" }));
-      } catch (err) {
-        res.end(JSON.stringify({ status: "erro_resposta", mensagem: err.message }));
+        return res.end(JSON.stringify({ status: "bloqueado" }));
+
+      } catch (erro) {
+        return res.end(JSON.stringify({
+          status: "erro_servidor",
+          detalhe: erro.message,
+          retorno_bruto: dadosBrutos
+        }));
       }
     });
   }).on('error', () => {
-    res.end(JSON.stringify({ status: "erro_servidor" }));
+    return res.end(JSON.stringify({ status: "erro_conexao" }));
   });
 };
