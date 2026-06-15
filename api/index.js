@@ -33,16 +33,15 @@ module.exports = (req, res) => {
     resp.on('data', chunk => data += chunk);
     resp.on('end', () => {
       try {
-        const resultado = JSON.parse(data);
+        const resposta = JSON.parse(data);
 
-        // Verifica se encontrou o documento
-        if (!resultado || !Array.isArray(resultado) || resultado.length === 0 || !resultado[0].document) {
+        // ✅ Ajustamos para ler exatamente como o Firestore retorna
+        if (!resposta || !Array.isArray(resposta) || !resposta[0]?.document) {
           return res.end(JSON.stringify({ status: "bloqueado" }));
         }
 
-        const campos = resultado[0].document.fields;
+        const campos = resposta[0].document.fields;
 
-        // Pega os valores de forma segura
         const nome = campos?.name?.stringValue || '';
         const vip = campos?.vip?.booleanValue === true;
         const expiracao = campos?.project_expiration?.stringValue || '';
