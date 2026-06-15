@@ -36,7 +36,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	firebaseKey := os.Getenv("FIREBASE_KEY")
 
 	if phone == "" {
-		_ = json.NewEncoder(w).Encode(map[string]string{"status": "API ONLINE"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"status":"API ONLINE | WCA CONNECT"})
 		return
 	}
 
@@ -51,7 +51,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	resp, err := http.Get(firebaseURL)
 	if err != nil {
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]string{"status": "erro_servidor"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"status":"erro_servidor"})
 		return
 	}
 	defer resp.Body.Close()
@@ -59,15 +59,16 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	var results []FirestoreResult
 	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]string{"status": "formato_invalido"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"status":"formato_invalido"})
 		return
 	}
 
 	if len(results) > 0 && results[0].Document.Fields.Name.StringValue != "" {
-		if results[0].Document.Fields.Vip.BooleanValue && results[0].Document.Fields.ProjectExpiration.StringValue != "" {
+		dados := results[0].Document.Fields
+		if dados.Vip.BooleanValue && dados.ProjectExpiration.StringValue != "" {
 			_ = json.NewEncoder(w).Encode(map[string]interface{}{
-				"nome":      results[0].Document.Fields.Name.StringValue,
-				"expiracao": results[0].Document.Fields.ProjectExpiration.StringValue,
+				"nome":      dados.Name.StringValue,
+				"expiracao": dados.ProjectExpiration.StringValue,
 				"status":    "ativo",
 			})
 			return
@@ -75,5 +76,5 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "bloqueado"})
+	_ = json.NewEncoder(w).Encode(map[string]string{"status":"bloqueado"})
 }
