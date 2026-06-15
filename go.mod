@@ -1,3 +1,3 @@
 module wca-api
 
-go 1.27
+go 1.22
