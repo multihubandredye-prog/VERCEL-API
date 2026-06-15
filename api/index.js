@@ -8,67 +8,44 @@ module.exports = (req, res) => {
   const phone = req.query.phone;
   const FIREBASE_KEY = process.env.FIREBASE_KEY;
 
-  // Resposta padrão sem número
   if (!phone) {
     return res.end(JSON.stringify({ status: "API ONLINE | WCA CONNECT" }));
   }
 
-  // Consulta exata para o Firestore
-  const query = JSON.stringify({
-    structuredQuery: {
-      from: [{ collectionId: "users" }],
-      where: {
-        fieldFilter: {
-          field: { fieldPath: "phone" },
-          op: "EQUAL",
-          value: { stringValue: phone }
-        }
-      },
-      limit: 1
-    }
-  });
-
-  const url = `https://firestore.googleapis.com/v1/projects/projects-general-fed41/databases/(default)/documents:runQuery?key=${FIREBASE_KEY}&query=${encodeURIComponent(query)}`;
+  // ✅ USA A MESMA ROTA QUE VOCÊ USA MANUALMENTE
+  const url = `https://firestore.googleapis.com/v1/projects/projects-general-fed41/databases/(default)/documents/users?key=${FIREBASE_KEY}`;
 
   https.get(url, (resp) => {
-    let dadosBrutos = '';
-    resp.on('data', pedaco => dadosBrutos += pedaco);
+    let data = '';
+    resp.on('data', chunk => data += chunk);
     resp.on('end', () => {
       try {
-        const resultado = JSON.parse(dadosBrutos);
+        const resposta = JSON.parse(data);
 
-        // ✅ VERIFICA E LÊ EXATAMENTE COMO O FIRESTORE DEVOLVE
-        if (!Array.isArray(resultado) || resultado.length === 0 || !resultado[0].document) {
-          return res.end(JSON.stringify({ status: "bloqueado" }));
+        // ✅ Percorre a lista para encontrar o número exato
+        if (resposta && resposta.documents && Array.isArray(resposta.documents)) {
+          const usuario = resposta.documents.find(doc => 
+            doc.fields?.phone?.stringValue === phone
+          );
+
+          if (usuario) {
+            const campos = usuario.fields;
+            return res.end(JSON.stringify({
+              nome: campos.name.stringValue,
+              expiracao: campos.project_expiration.stringValue,
+              status: "ativo"
+            }));
+          }
         }
 
-        const campos = resultado[0].document.fields;
-
-        // Pega os valores com segurança
-        const nome = campos?.name?.stringValue?.trim() || '';
-        const vip = campos?.vip?.booleanValue === true;
-        const expiracao = campos?.project_expiration?.stringValue?.trim() || '';
-
-        // Valida todas as condições
-        if (nome !== '' && vip === true && expiracao !== '') {
-          return res.end(JSON.stringify({
-            nome: nome,
-            expiracao: expiracao,
-            status: "ativo"
-          }));
-        }
-
+        // Se não encontrou = bloqueado
         return res.end(JSON.stringify({ status: "bloqueado" }));
 
-      } catch (erro) {
-        return res.end(JSON.stringify({
-          status: "erro_servidor",
-          detalhe: erro.message,
-          retorno_bruto: dadosBrutos
-        }));
+      } catch (err) {
+        return res.end(JSON.stringify({ status: "bloqueado" }));
       }
     });
   }).on('error', () => {
-    return res.end(JSON.stringify({ status: "erro_conexao" }));
+    return res.end(JSON.stringify({ status: "bloqueado" }));
   });
 };
