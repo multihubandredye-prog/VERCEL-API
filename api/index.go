@@ -41,11 +41,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := fmt.Sprintf(`{"structuredQuery":{"from":[{"collectionId":"users"}],"where":{"fieldFilter":{"field":{"fieldPath":"phone"},"op":"EQUAL","value":{"stringValue":"%s"}}}},"limit":1}}`, phone)
-	queryEsc := url.QueryEscape(query)
+	queryEncoded := url.QueryEscape(query)
 
 	firebaseURL := fmt.Sprintf(
 		"https://firestore.googleapis.com/v1/projects/projects-general-fed41/databases/(default)/documents:runQuery?key=%s&query=%s",
-		firebaseKey, queryEsc,
+		firebaseKey, queryEncoded,
 	)
 
 	resp, err := http.Get(firebaseURL)
