@@ -40,7 +40,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ✅ Consulta com o ID DO PROJETO CONFIRMADO
 	query := fmt.Sprintf(`{"structuredQuery":{"from":[{"collectionId":"users"}],"where":{"fieldFilter":{"field":{"fieldPath":"phone"},"op":"EQUAL","value":{"stringValue":"%s"}}}},"limit":1}}`, phone)
 	queryEncoded := url.QueryEscape(query)
 
