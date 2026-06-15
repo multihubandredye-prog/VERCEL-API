@@ -3,7 +3,10 @@
   "builds": [
     {
       "src": "api/index.js",
-      "use": "@vercel/node@3"
+      "use": "@vercel/node@3",
+      "config": {
+        "nodeVersion": "22.x"
+      }
     }
   ],
   "routes": [
