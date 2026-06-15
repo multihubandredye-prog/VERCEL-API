@@ -1,2 +1,3 @@
-module vercel-api
-go 1.20
+module wca-api
+
+go 1.21
