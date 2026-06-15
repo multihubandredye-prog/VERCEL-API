@@ -6,7 +6,7 @@ module.exports = (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
 
   const phone = req.query.phone;
-  const FIREBASE_KEY = process.env.FIREBASE_KEY || '';
+  const FIREBASE_KEY = process.env.FIREBASE_KEY;
 
   if (!phone) {
     return res.end(JSON.stringify({ status: "API ONLINE | WCA CONNECT" }));
@@ -33,14 +33,14 @@ module.exports = (req, res) => {
     resp.on('data', chunk => data += chunk);
     resp.on('end', () => {
       try {
-        const resposta = JSON.parse(data);
+        const resultado = JSON.parse(data);
 
-        // ✅ Ajustamos para ler exatamente como o Firestore retorna
-        if (!resposta || !Array.isArray(resposta) || !resposta[0]?.document) {
+        // ✅ LÊ EXATAMENTE O FORMATO QUE O FIRESTORE RETORNA
+        if (!resultado || !Array.isArray(resultado) || !resultado[0]?.document) {
           return res.end(JSON.stringify({ status: "bloqueado" }));
         }
 
-        const campos = resposta[0].document.fields;
+        const campos = resultado[0].document.fields;
 
         const nome = campos?.name?.stringValue || '';
         const vip = campos?.vip?.booleanValue === true;
@@ -56,7 +56,7 @@ module.exports = (req, res) => {
 
         res.end(JSON.stringify({ status: "bloqueado" }));
       } catch (err) {
-        res.end(JSON.stringify({ status: "erro_resposta", detalhe: err.message }));
+        res.end(JSON.stringify({ status: "erro_resposta", mensagem: err.message }));
       }
     });
   }).on('error', () => {
