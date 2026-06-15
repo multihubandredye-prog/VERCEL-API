@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "functions": {
+    "api/index.go": {
+      "runtime": "go1.x"
+    }
+  },
   "builds": [
     {
       "src": "api/index.go",
