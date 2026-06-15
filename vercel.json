@@ -1,7 +1,9 @@
 {
   "version": 2,
-  "engines": {
-    "node": "22.x"
+  "functions": {
+    "api/index.js": {
+      "runtime": "nodejs22.x"
+    }
   },
   "builds": [
     {
