@@ -8,12 +8,23 @@ import (
 	"os"
 )
 
-type FirebaseResponse struct {
+// Estrutura exata da resposta do Firestore
+type FirestoreResult struct {
 	Document struct {
+		Name   string `json:"name"`
 		Fields struct {
-			Name              struct{ StringValue string `json:"name"` } `json:"name"`
-			ProjectExpiration struct{ StringValue string `json:"project_expiration"` } `json:"project_expiration"`
-			Vip               struct{ BooleanValue bool `json:"vip"` } `json:"vip"`
+			Phone struct {
+				StringValue string `json:"stringValue"`
+			} `json:"phone"`
+			Name struct {
+				StringValue string `json:"stringValue"`
+			} `json:"name"`
+			ProjectExpiration struct {
+				StringValue string `json:"stringValue"`
+			} `json:"project_expiration"`
+			Vip struct {
+				BooleanValue bool `json:"booleanValue"`
+			} `json:"vip"`
 		} `json:"fields"`
 	} `json:"document"`
 }
@@ -22,11 +33,12 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	phone := r.URL.Query().Get("phone")
 	firebaseKey := os.Getenv("FIREBASE_KEY")
 
+	// Cabeçalhos corretos
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 
-	// Página inicial quando sem número
+	// Página inicial sem número
 	if phone == "" {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		fmt.Fprintf(w, `
@@ -35,7 +47,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Consulta adaptada aos seus campos
+	// Consulta exata para o campo phone
 	query := fmt.Sprintf(`{"structuredQuery":{"from":[{"collectionId":"users"}],"where":{"fieldFilter":{"field":{"fieldPath":"phone"},"op":"EQUAL","value":{"stringValue":"%s"}}}},"limit":1}}`, phone)
 	queryEncoded := url.QueryEscape(query)
 
@@ -52,29 +64,30 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	var result []FirebaseResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+	var results []FirestoreResult
+	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode(map[string]string{"status": "formato_invalido"})
 		return
 	}
 
-	// Verifica se encontrou e retorna no formato que o código Tasker espera
-	if len(result) > 0 && result[0].Document.Fields.Name.StringValue != "" {
-		expDate := result[0].Document.Fields.ProjectExpiration.StringValue
-		name := result[0].Document.Fields.Name.StringValue
-		// Se tem vip=true → retorna como ativo
-		if result[0].Document.Fields.Vip.BooleanValue {
+	// Verifica e retorna no formato que o Tasker precisa
+	if len(results) > 0 && results[0].Document.Fields.Name.StringValue != "" {
+		nome := results[0].Document.Fields.Name.StringValue
+		vencimento := results[0].Document.Fields.ProjectExpiration.StringValue
+		vip := results[0].Document.Fields.Vip.BooleanValue
+
+		if vip && vencimento != "" {
 			_ = json.NewEncoder(w).Encode(map[string]string{
-				"nome":      name,
-				"expiracao": expDate,
+				"nome":      nome,
+				"expiracao": vencimento,
 				"status":    "ativo",
 			})
 			return
 		}
 	}
 
-	// Se não encontrar ou não for VIP
+	// Se não encontrar ou não for válido
 	w.WriteHeader(http.StatusNotFound)
 	_ = json.NewEncoder(w).Encode(map[string]string{"status": "bloqueado"})
 }
