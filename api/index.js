@@ -34,24 +34,30 @@ module.exports = (req, res) => {
     resp.on('end', () => {
       try {
         const resultado = JSON.parse(data);
-        const documento = resultado[0]?.document?.fields;
 
-        if (documento && documento.name?.stringValue) {
-          const vip = documento.vip?.booleanValue || false;
-          const expira = documento.project_expiration?.stringValue || '';
+        // Verifica se encontrou o documento
+        if (!resultado || !Array.isArray(resultado) || resultado.length === 0 || !resultado[0].document) {
+          return res.end(JSON.stringify({ status: "bloqueado" }));
+        }
 
-          if (vip && expira) {
-            return res.end(JSON.stringify({
-              nome: documento.name.stringValue,
-              expiracao: expira,
-              status: "ativo"
-            }));
-          }
+        const campos = resultado[0].document.fields;
+
+        // Pega os valores de forma segura
+        const nome = campos?.name?.stringValue || '';
+        const vip = campos?.vip?.booleanValue === true;
+        const expiracao = campos?.project_expiration?.stringValue || '';
+
+        if (nome && vip && expiracao) {
+          return res.end(JSON.stringify({
+            nome: nome,
+            expiracao: expiracao,
+            status: "ativo"
+          }));
         }
 
         res.end(JSON.stringify({ status: "bloqueado" }));
       } catch (err) {
-        res.end(JSON.stringify({ status: "erro_resposta" }));
+        res.end(JSON.stringify({ status: "erro_resposta", detalhe: err.message }));
       }
     });
   }).on('error', () => {
