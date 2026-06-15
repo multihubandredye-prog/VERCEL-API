@@ -1,4 +1,4 @@
-package main
+package handler   // ✅ AQUI ESTAVA O ERRO: trocamos de "main" para "handler" como o Vercel pediu
 
 import (
 	"encoding/json"
@@ -36,7 +36,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	firebaseKey := os.Getenv("FIREBASE_KEY")
 
 	if phone == "" {
-		_ = json.NewEncoder(w).Encode(map[string]string{"status": "API ONLINE | WCA CONNECT"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"status":"API ONLINE | WCA CONNECT"})
 		return
 	}
 
@@ -51,7 +51,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	resp, err := http.Get(firebaseURL)
 	if err != nil {
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]string{"status": "erro_servidor"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"status":"erro_servidor"})
 		return
 	}
 	defer resp.Body.Close()
@@ -59,7 +59,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	var results []FirestoreResult
 	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(map[string]string{"status": "formato_invalido"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"status":"formato_invalido"})
 		return
 	}
 
@@ -76,5 +76,5 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "bloqueado"})
+	_ = json.NewEncoder(w).Encode(map[string]string{"status":"bloqueado"})
 }
