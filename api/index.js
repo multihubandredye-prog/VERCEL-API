@@ -33,19 +33,22 @@ module.exports = (req, res) => {
             return res.end(JSON.stringify({
               nome: campos.name.stringValue,
               expiracao: campos.project_expiration.stringValue,
-              status: "ativo"
+              status: "ativo",
+              plano: "premium",
+              tipo: "premium",
+              modo: "PREMIUM"
             }));
           }
         }
 
         // Se não encontrou = bloqueado
-        return res.end(JSON.stringify({ status: "bloqueado" }));
+        return res.end(JSON.stringify({ status: "bloqueado", plano: "teste", tipo: "evaluation", modo: "TESTE" }));
 
       } catch (err) {
-        return res.end(JSON.stringify({ status: "bloqueado" }));
+        return res.end(JSON.stringify({ status: "bloqueado", plano: "teste", tipo: "evaluation", modo: "TESTE" }));
       }
     });
   }).on('error', () => {
-    return res.end(JSON.stringify({ status: "bloqueado" }));
+    return res.end(JSON.stringify({ status: "bloqueado", plano: "teste", tipo: "evaluation", modo: "TESTE" }));
   });
 };
