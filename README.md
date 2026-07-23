@@ -54,19 +54,18 @@ Documento recomendado:
 users/{phone}
 ```
 
+O documento salvo no Firebase usa campos únicos em inglês para evitar duplicidade.
+
 Exemplo:
 
 ```json
 {
   "name": "Andredye Oliveira Melo",
-  "nome": "Andredye Oliveira Melo",
   "phone": "558197573129",
   "phoneMasked": "5581****3129",
   "status": "premium",
   "plan": "1 mês",
-  "plano": "premium",
   "project_expiration": "2026-08-23",
-  "expiration": "2026-08-23",
   "createdAt": "2026-07-23T10:00:00.000Z",
   "updatedAt": "2026-07-23T10:00:00.000Z",
   "lastRequestAt": "2026-07-23T09:50:00.000Z",
@@ -83,6 +82,20 @@ Exemplo:
   ]
 }
 ```
+
+### Campos que não são mais gravados no Firebase
+
+Para evitar informação duplicada, a API não grava mais estes pares repetidos:
+
+```txt
+name / nome
+createdAt / created_at
+status / pendingStatus
+project_expiration / expiration / expiracao
+plan / plano
+```
+
+O armazenamento interno fica em inglês. A resposta pública da API ainda pode retornar `nome`, `expiracao`, `plano`, `modo` para manter compatibilidade com o Java/Tasker.
 
 ---
 
@@ -213,7 +226,6 @@ Resposta:
   "success": true,
   "message": "Solicitação Premium registrada com sucesso. Aguarde a confirmação do pagamento.",
   "status": "pending_activation",
-  "pendingStatus": "pending_activation",
   "phone": "558197573129",
   "phoneMasked": "5581****3129",
   "plan": "1 mês",

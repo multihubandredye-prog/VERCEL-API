@@ -1,4 +1,4 @@
-const { setCors, readBody, normalizePhone, getUserByPhone, saveUser, isAdminRequest, todayYmd } = require('../_premium');
+const { setCors, readBody, normalizePhone, getUserByPhone, saveUser, isAdminRequest, todayYmd, cleanUserData } = require('../_premium');
 
 module.exports = async (req, res) => {
   setCors(res);
@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
     const phone = normalizePhone(body.phone);
     if (!phone || phone.length < 8) return res.status(400).json({ success: false, error: 'Número de telefone inválido' });
     const existing = await getUserByPhone(phone);
-    const old = existing ? existing.data : {};
+    const old = cleanUserData(existing ? existing.data : {});
     const now = new Date().toISOString();
     const payload = {
       ...old,

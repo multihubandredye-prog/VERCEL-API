@@ -1,4 +1,4 @@
-const { setCors, readBody, normalizePhone, maskPhone, inferMonths, getPlanAmount, getUserByPhone, saveUser, isAdminRequest, addMonthsYmd, isFutureOrToday, todayYmd } = require('../_premium');
+const { setCors, readBody, normalizePhone, maskPhone, inferMonths, getPlanAmount, getUserByPhone, saveUser, isAdminRequest, addMonthsYmd, isFutureOrToday, todayYmd, cleanUserData } = require('../_premium');
 
 module.exports = async (req, res) => {
   setCors(res);
@@ -13,12 +13,12 @@ module.exports = async (req, res) => {
     const phone = normalizePhone(body.phone);
     const name = String(body.name || body.nome || '').trim();
     const plan = String(body.plan || body.plano || '').trim();
-    const months = inferMonths(plan, body.months || body.meses || body.days ? undefined : undefined) || 1;
+    const months = inferMonths(plan, body.months || body.meses) || 1;
     const amount = getPlanAmount(plan, body.amount || body.valor);
     if (!phone || phone.length < 8) return res.status(400).json({ success: false, error: 'Número de telefone inválido' });
 
     const existing = await getUserByPhone(phone);
-    const old = existing ? existing.data : {};
+    const old = cleanUserData(existing ? existing.data : {});
     const baseExpiration = isFutureOrToday(old.project_expiration) ? old.project_expiration : todayYmd();
     const expiration = body.expiration || body.expiracao || addMonthsYmd(baseExpiration, body.months || body.meses || months);
     const finalName = name || old.name || old.nome || 'Premium';
@@ -36,14 +36,11 @@ module.exports = async (req, res) => {
     const payload = {
       ...old,
       name: finalName,
-      nome: finalName,
       phone,
       phoneMasked: maskPhone(phone),
       status: 'premium',
       plan: plan || old.plan || 'manual',
-      plano: 'premium',
       project_expiration: expiration,
-      expiration,
       lastPaymentAt: now,
       updatedAt: now,
       createdAt: old.createdAt || now,

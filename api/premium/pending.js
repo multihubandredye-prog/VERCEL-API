@@ -9,7 +9,7 @@ module.exports = async (req, res) => {
     const users = await listUsers();
     const pending = users
       .map(u => ({ id: u.id, ...u.data }))
-      .filter(u => String(u.status || '').toLowerCase() === 'pending_activation' || String(u.pendingStatus || '').toLowerCase() === 'pending_activation')
+      .filter(u => String(u.status || '').toLowerCase() === 'pending_activation')
       .sort((a, b) => String(b.lastRequestAt || '').localeCompare(String(a.lastRequestAt || '')));
     return res.status(200).json({ success: true, count: pending.length, data: pending });
   } catch (err) {

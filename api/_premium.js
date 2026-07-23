@@ -158,6 +158,19 @@ function getPlanAmount(plan, amount) {
   return '35';
 }
 
+
+function cleanUserData(raw = {}) {
+  const copy = { ...(raw || {}) };
+  // Campos antigos/duplicados que não devem ser mantidos no documento canônico.
+  delete copy.nome;
+  delete copy.created_at;
+  delete copy.pendingStatus;
+  delete copy.expiration;
+  delete copy.expiracao;
+  delete copy.plano;
+  return copy;
+}
+
 function publicStatusFromUser(user) {
   if (!user) return { status: 'teste', plano: 'teste', tipo: 'evaluation', modo: 'TESTE' };
   const d = user.data || user;
@@ -211,5 +224,6 @@ module.exports = {
   listUsers,
   isAdminRequest,
   publicStatusFromUser,
+  cleanUserData,
   readBody
 };

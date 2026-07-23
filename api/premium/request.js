@@ -1,4 +1,4 @@
-const { setCors, readBody, normalizePhone, maskPhone, inferMonths, getPlanAmount, getUserByPhone, saveUser, publicStatusFromUser } = require('../_premium');
+const { setCors, readBody, normalizePhone, maskPhone, inferMonths, getPlanAmount, getUserByPhone, saveUser, publicStatusFromUser, cleanUserData } = require('../_premium');
 
 module.exports = async (req, res) => {
   setCors(res);
@@ -18,15 +18,13 @@ module.exports = async (req, res) => {
 
     const now = new Date().toISOString();
     const existing = await getUserByPhone(phone);
-    const old = existing ? existing.data : {};
+    const old = cleanUserData(existing ? existing.data : {});
     const payload = {
       ...old,
       name,
-      nome: name,
       phone,
       phoneMasked: maskPhone(phone),
       status: publicStatusFromUser(existing).status === 'premium' ? 'premium' : 'pending_activation',
-      pendingStatus: 'pending_activation',
       requestedPlan: plan,
       requestedMonths: months,
       requestedAmount: amount,
@@ -41,7 +39,6 @@ module.exports = async (req, res) => {
       success: true,
       message: 'Solicitação Premium registrada com sucesso. Aguarde a confirmação do pagamento.',
       status: payload.status,
-      pendingStatus: 'pending_activation',
       phone,
       phoneMasked: payload.phoneMasked,
       plan,
