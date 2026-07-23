@@ -54,9 +54,9 @@ Documento recomendado:
 users/{phone}
 ```
 
-O documento salvo no Firebase usa campos únicos em inglês para evitar duplicidade.
+A API salva o cadastro Premium com os campos atuais abaixo.
 
-Exemplo:
+Exemplo de usuário Premium ativo:
 
 ```json
 {
@@ -83,19 +83,28 @@ Exemplo:
 }
 ```
 
-### Campos que não são mais gravados no Firebase
 
-Para evitar informação duplicada, a API não grava mais estes pares repetidos:
+### Campos principais salvos no Firebase
 
-```txt
-name / nome
-createdAt / created_at
-status / pendingStatus
-project_expiration / expiration / expiracao
-plan / plano
-```
-
-O armazenamento interno fica em inglês. A resposta pública da API ainda pode retornar `nome`, `expiracao`, `plano`, `modo` para manter compatibilidade com o Java/Tasker.
+| Campo | Descrição |
+|---|---|
+| `name` | Nome do usuário/cliente |
+| `phone` | Número normalizado usado como identificador principal |
+| `phoneMasked` | Número mascarado para exibição administrativa |
+| `status` | Estado atual: `pending_activation`, `premium`, `cancelled` ou outros estados operacionais |
+| `plan` | Plano/descrição informada na ativação ou solicitação |
+| `project_expiration` | Data final da assinatura Premium no formato `yyyy-MM-dd` |
+| `createdAt` | Data/hora em que o cadastro foi criado |
+| `updatedAt` | Data/hora da última alteração do cadastro |
+| `lastRequestAt` | Data/hora ISO da última solicitação Premium feita pelo app |
+| `lastRequestAtBR` | Data/hora da última solicitação em formato brasileiro |
+| `lastPaymentAt` | Data/hora do último pagamento confirmado pelo administrador |
+| `lastActivatedDays` | Última quantidade de dias liberada pelo administrador |
+| `requestedPlan` | Plano que o usuário solicitou pelo app |
+| `requestedMonths` | Quantidade de meses inferida/solicitada pelo app, quando houver |
+| `requestedAmount` | Valor informado na solicitação feita pelo app |
+| `source` | Origem do cadastro, por exemplo `wca-app` ou `manual-admin` |
+| `payments` | Histórico de ativações/pagamentos confirmados manualmente |
 
 ---
 
@@ -103,9 +112,9 @@ O armazenamento interno fica em inglês. A resposta pública da API ainda pode r
 
 | Status | Descrição |
 |---|---|
-| `pending_activation` | Usuário solicitou Premium, mas o pagamento ainda não foi confirmado |
+| `pending_activation` | Usuário solicitou Premium pelo app, mas o administrador ainda não confirmou pagamento/ativação |
 | `premium` | Assinatura ativa |
-| `expired` | Assinatura expirada |
+| `expired` | Assinatura expirada; pode ser definido manualmente, mas normalmente a API calcula expiração quando `project_expiration` já passou |
 | `cancelled` | Assinatura cancelada manualmente |
 | `teste` | Usuário sem Premium |
 
