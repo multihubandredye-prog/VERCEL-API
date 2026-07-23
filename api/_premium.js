@@ -41,6 +41,13 @@ function nowBrazil() {
   });
 }
 
+function addDaysYmd(ymd, days) {
+  const [y, m, d] = String(ymd || todayYmd()).split('-').map(Number);
+  const date = new Date(Date.UTC(y, (m || 1) - 1, d || 1));
+  date.setUTCDate(date.getUTCDate() + Number(days || 0));
+  return date.toISOString().slice(0, 10);
+}
+
 function addMonthsYmd(ymd, months) {
   const [y, m, d] = String(ymd || todayYmd()).split('-').map(Number);
   const date = new Date(Date.UTC(y, (m || 1) - 1, d || 1));
@@ -240,6 +247,7 @@ module.exports = {
   maskPhone,
   todayYmd,
   nowBrazil,
+  addDaysYmd,
   addMonthsYmd,
   isFutureOrToday,
   inferMonths,

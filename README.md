@@ -355,6 +355,49 @@ Se a assinatura já estiver vencida, o novo período começa a contar a partir d
 
 ---
 
+
+
+### Ativar Premium por quantidade exata de dias
+
+O endpoint administrativo também aceita `days` ou `dias`. Essa é a forma recomendada quando você, como administrador, quer escolher exatamente quantos dias o usuário terá de acesso, independente do plano que ele solicitou no app.
+
+Exemplo: usuário pediu 30 dias, mas você quer liberar 35 dias:
+
+```bash
+curl -X POST "https://wca-api-three-alpha.vercel.app/api/premium/activate" \
+  -H "x-admin-key: SUA_CHAVE_ADMIN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Andredye Oliveira Melo",
+    "phone": "558197573129",
+    "days": 35,
+    "amount": "35",
+    "method": "pix",
+    "note": "Plano de 30 dias com 5 dias adicionais"
+  }'
+```
+
+Resposta:
+
+```json
+{
+  "success": true,
+  "message": "Premium ativado com sucesso.",
+  "phone": "558197573129",
+  "status": "premium",
+  "days": 35,
+  "expiration": "2026-08-27"
+}
+```
+
+Ordem de prioridade para calcular a expiração:
+
+```txt
+expiration/expiracao > days/dias > months/meses
+```
+
+Se o usuário ainda tiver Premium ativo, os dias são somados a partir da data de expiração atual. Se estiver vencido ou sem Premium, os dias contam a partir de hoje.
+
 ## 5. Cancelar Premium
 
 Endpoint administrativo.
