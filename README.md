@@ -357,6 +357,352 @@ Se a assinatura já estiver vencida, o novo período começa a contar a partir d
 
 
 
+
+
+### Explicação detalhada dos campos do `/api/premium/activate`
+
+Exemplo completo:
+
+```bash
+curl -X POST "https://wca-api-three-alpha.vercel.app/api/premium/activate" \
+  -H "x-admin-key: SUA_CHAVE_ADMIN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Andredye Oliveira Melo",
+    "phone": "558197573129",
+    "days": 35,
+    "amount": "35",
+    "method": "pix",
+    "note": "Plano de 30 dias com 5 dias adicionais"
+  }'
+```
+
+#### `x-admin-key`
+
+```http
+x-admin-key: SUA_CHAVE_ADMIN
+```
+
+É a chave administrativa configurada na variável de ambiente:
+
+```env
+PREMIUM_ADMIN_KEY=SUA_CHAVE_ADMIN
+```
+
+Somente quem possui essa chave consegue ativar, renovar ou cancelar Premium. Sem essa chave, a API retorna erro de permissão.
+
+---
+
+#### `name`
+
+```json
+"name": "Andredye Oliveira Melo"
+```
+
+Nome do usuário que será salvo/atualizado no Firebase.
+
+Uso:
+
+- identificar o cliente no painel/admin;
+- exibir o nome no retorno da API;
+- gravar no documento do usuário.
+
+Se o usuário já existir e você não enviar `name`, a API tenta manter o nome já salvo anteriormente.
+
+---
+
+#### `phone`
+
+```json
+"phone": "558197573129"
+```
+
+Número do telefone que será usado como identificador principal do Premium.
+
+Esse número deve estar normalizado, preferencialmente com:
+
+```txt
+DDI + DDD + número
+```
+
+Exemplo:
+
+```txt
+55 81 97573 129
+```
+
+Enviado como:
+
+```txt
+558197573129
+```
+
+A API remove automaticamente caracteres que não são números. Então estes formatos também funcionam:
+
+```txt
++55 (81) 97573-129
+558197573129
+```
+
+Internamente, o documento no Firebase usa esse número como base do cadastro.
+
+---
+
+#### `days`
+
+```json
+"days": 35
+```
+
+Quantidade exata de dias que você quer liberar para o usuário.
+
+Esse é o campo recomendado para seu controle manual.
+
+Exemplos:
+
+```json
+"days": 5
+```
+
+Libera 5 dias.
+
+```json
+"days": 30
+```
+
+Libera 30 dias.
+
+```json
+"days": 35
+```
+
+Libera 35 dias.
+
+```json
+"days": 365
+```
+
+Libera 365 dias.
+
+Regra importante:
+
+- se o usuário não tem Premium ativo, os dias contam a partir de hoje;
+- se o usuário ainda tem Premium ativo, os dias são somados à data de expiração atual.
+
+Exemplo:
+
+```txt
+Premium atual vence: 10/08/2026
+Você envia: days = 35
+Nova expiração: 14/09/2026
+```
+
+Assim o usuário não perde os dias que ainda tinha.
+
+---
+
+#### `amount`
+
+```json
+"amount": "35"
+```
+
+Valor pago pelo usuário.
+
+Esse campo é apenas informativo/administrativo. Ele serve para histórico e controle interno.
+
+Ele não define automaticamente o tempo de Premium.
+
+Quem define o tempo é:
+
+```json
+"days"
+```
+
+ou, se você preferir, uma data manual em:
+
+```json
+"expiration"
+```
+
+Exemplos de `amount`:
+
+```json
+"amount": "35"
+```
+
+```json
+"amount": "100"
+```
+
+```json
+"amount": "R$ 35,00"
+```
+
+Você pode salvar como número ou texto. Recomendado usar texto para evitar problema com vírgula/moeda.
+
+No Firebase, esse valor fica registrado dentro do histórico:
+
+```json
+"payments": [
+  {
+    "amount": "35"
+  }
+]
+```
+
+---
+
+#### `method`
+
+```json
+"method": "pix"
+```
+
+Método de pagamento usado.
+
+Exemplos:
+
+```json
+"method": "pix"
+```
+
+```json
+"method": "cartao"
+```
+
+```json
+"method": "dinheiro"
+```
+
+```json
+"method": "manual"
+```
+
+Esse campo também é informativo e fica salvo no histórico de pagamentos.
+
+---
+
+#### `note`
+
+```json
+"note": "Plano de 30 dias com 5 dias adicionais"
+```
+
+Observação livre para você lembrar o motivo daquela ativação/renovação.
+
+Exemplos:
+
+```json
+"note": "Pagamento confirmado via Pix"
+```
+
+```json
+"note": "Cliente ganhou 5 dias de bônus"
+```
+
+```json
+"note": "Renovação manual feita pelo administrador"
+```
+
+Esse campo não altera a lógica da API. Ele só fica salvo no histórico para consulta futura.
+
+---
+
+### Campos opcionais alternativos
+
+#### `expiration`
+
+```json
+"expiration": "2026-08-27"
+```
+
+Define uma data exata de expiração.
+
+Se você enviar `expiration`, ela tem prioridade sobre `days` e `months`.
+
+Ordem de prioridade:
+
+```txt
+expiration > days > months
+```
+
+Exemplo:
+
+```json
+{
+  "phone": "558197573129",
+  "expiration": "2026-12-31"
+}
+```
+
+A assinatura ficará válida até:
+
+```txt
+31/12/2026
+```
+
+---
+
+#### `months`
+
+```json
+"months": 1
+```
+
+Campo antigo para ativar por quantidade de meses.
+
+Ainda funciona, mas para seu fluxo atual o recomendado é usar:
+
+```json
+"days"
+```
+
+---
+
+### O que é salvo no Firebase ao ativar
+
+Quando você chama `/api/premium/activate`, a API atualiza o documento do usuário e salva informações como:
+
+```json
+{
+  "name": "Andredye Oliveira Melo",
+  "phone": "558197573129",
+  "phoneMasked": "5581****3129",
+  "status": "premium",
+  "project_expiration": "2026-08-27",
+  "lastActivatedDays": 35,
+  "lastPaymentAt": "2026-07-23T22:00:00.000Z",
+  "updatedAt": "2026-07-23T22:00:00.000Z",
+  "payments": [
+    {
+      "date": "2026-07-23T22:00:00.000Z",
+      "days": 35,
+      "months": 0,
+      "amount": "35",
+      "method": "pix",
+      "note": "Plano de 30 dias com 5 dias adicionais"
+    }
+  ]
+}
+```
+
+---
+
+### Resumo rápido dos campos
+
+| Campo | Obrigatório | Função |
+|---|---:|---|
+| `phone` | Sim | Identifica o usuário Premium |
+| `name` | Recomendado | Nome do usuário salvo no Firebase |
+| `days` | Recomendado | Quantidade exata de dias liberados |
+| `amount` | Opcional | Valor pago, apenas para histórico |
+| `method` | Opcional | Método de pagamento, exemplo `pix` |
+| `note` | Opcional | Observação administrativa |
+| `expiration` | Opcional | Define uma data exata e ignora `days` |
+| `months` | Opcional | Forma antiga de ativar por meses |
+
+
 ### Ativar Premium por quantidade exata de dias
 
 O endpoint administrativo também aceita `days` ou `dias`. Essa é a forma recomendada quando você, como administrador, quer escolher exatamente quantos dias o usuário terá de acesso, independente do plano que ele solicitou no app.
