@@ -12,6 +12,7 @@ module.exports = async (req, res) => {
     const plan = String(body.plan || body.plano || '1 mês').trim();
     const months = inferMonths(plan, body.months || body.meses);
     const amount = getPlanAmount(plan, body.amount || body.valor);
+    const updatePending = body.updatePending === true || body.updatePending === 'true' || body.edit === true || body.edit === 'true';
 
     if (!phone || phone.length < 8) return res.status(400).json({ success: false, error: 'Número de telefone inválido' });
     if (!name || name.length < 2) return res.status(400).json({ success: false, error: 'Nome obrigatório' });
@@ -21,7 +22,7 @@ module.exports = async (req, res) => {
     const publicStatus = publicStatusFromUser(existing);
     const old = cleanUserData(existing ? existing.data : {});
 
-    if (String(old.status || '').toLowerCase() === 'pending_activation') {
+    if (String(old.status || '').toLowerCase() === 'pending_activation' && !updatePending) {
       return res.status(200).json({
         success: true,
         alreadyPending: true,
@@ -56,7 +57,10 @@ module.exports = async (req, res) => {
     await saveUser(phone, payload);
     return res.status(200).json({
       success: true,
-      message: 'Solicitação Premium registrada com sucesso. Aguarde a confirmação do pagamento.',
+      updated: updatePending,
+      message: updatePending
+        ? 'Solicitação Premium atualizada com sucesso. Aguarde a confirmação do pagamento.'
+        : 'Solicitação Premium registrada com sucesso. Aguarde a confirmação do pagamento.',
       status: payload.status,
       phone,
       phoneMasked: payload.phoneMasked,

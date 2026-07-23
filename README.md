@@ -236,6 +236,26 @@ Resposta:
 
 ---
 
+
+### Atualizar solicitação pendente
+
+Se o usuário errou o plano/nome antes da ativação, o app pode reenviar a solicitação com `updatePending: true`.
+
+```bash
+curl -X POST "https://wca-api-three-alpha.vercel.app/api/premium/request" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Andredye Oliveira Melo",
+    "phone": "558197573129",
+    "plan": "3 meses",
+    "months": 3,
+    "amount": "100",
+    "updatePending": true
+  }'
+```
+
+Isso atualiza a solicitação existente em `pending_activation`, em vez de criar uma duplicada.
+
 ## 3. Listar solicitações pendentes
 
 Endpoint administrativo.
