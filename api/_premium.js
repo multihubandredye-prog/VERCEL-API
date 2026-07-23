@@ -29,6 +29,18 @@ function todayYmd() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function nowBrazil() {
+  return new Date().toLocaleString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+}
+
 function addMonthsYmd(ymd, months) {
   const [y, m, d] = String(ymd || todayYmd()).split('-').map(Number);
   const date = new Date(Date.UTC(y, (m || 1) - 1, d || 1));
@@ -188,7 +200,19 @@ function publicStatusFromUser(user) {
     return { nome: name, expiracao: expiration, status: 'expired', plano: 'premium', tipo: 'expired', modo: 'PREMIUM', expired: true };
   }
   if (status === 'pending_activation') {
-    return { nome: name, status: 'pending_activation', plano: 'premium', tipo: 'pending_activation', modo: 'TESTE', pending: true };
+    return {
+      nome: name,
+      status: 'pending_activation',
+      plano: 'premium',
+      tipo: 'pending_activation',
+      modo: 'TESTE',
+      pending: true,
+      requestedPlan: d.requestedPlan || '',
+      requestedMonths: d.requestedMonths || '',
+      requestedAmount: d.requestedAmount || '',
+      lastRequestAt: d.lastRequestAt || '',
+      lastRequestAtBR: d.lastRequestAtBR || d.requestedAtBR || ''
+    };
   }
   if (status === 'cancelled') {
     return { nome: name, status: 'cancelled', plano: 'teste', tipo: 'cancelled', modo: 'TESTE' };
@@ -215,6 +239,7 @@ module.exports = {
   normalizePhone,
   maskPhone,
   todayYmd,
+  nowBrazil,
   addMonthsYmd,
   isFutureOrToday,
   inferMonths,
