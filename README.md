@@ -1071,6 +1071,52 @@ Resposta:
 | `note` | Observação administrativa salva na ativação |
 
 
+
+
+## Cancelar solicitação Premium pendente pelo usuário
+
+Endpoint público para cancelar uma solicitação Premium que ainda está pendente.
+
+```http
+POST /api/premium/cancel-request
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "phone": "558197573129"
+}
+```
+
+Exemplo:
+
+```bash
+curl -X POST "https://wca-api-three-alpha.vercel.app/api/premium/cancel-request" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "phone": "558197573129"
+  }'
+```
+
+### Regras
+
+Se o usuário ainda não é Premium e só possui `pending_activation`, a API remove o documento da coleção `users`.
+
+Se o usuário já é Premium e possui uma renovação pendente em `pendingRequest`, a API remove somente o `pendingRequest` e mantém a assinatura Premium ativa.
+
+Resposta de sucesso:
+
+```json
+{
+  "success": true,
+  "message": "Solicitação pendente cancelada com sucesso.",
+  "phoneMasked": "5581****3129",
+  "cancelled": true
+}
+```
+
 ## Fluxo completo manual
 
 ```txt
