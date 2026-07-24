@@ -31,7 +31,6 @@ module.exports = async (req, res) => {
         alreadyPending: true,
         message: 'Já existe uma solicitação Premium pendente para este número. Aguarde o retorno do desenvolvedor.',
         status: 'pending_activation',
-        phone,
         phoneMasked: old.phoneMasked || maskPhone(phone),
         plan: currentPending.requestedPlan || plan,
         months: currentPending.requestedMonths || months,
@@ -54,7 +53,6 @@ module.exports = async (req, res) => {
       ? {
           ...old,
           name,
-          phone,
           phoneMasked: old.phoneMasked || maskPhone(phone),
           status: 'premium',
           pendingRequest,
@@ -64,7 +62,6 @@ module.exports = async (req, res) => {
       : {
           ...old,
           name,
-          phone,
           phoneMasked: maskPhone(phone),
           status: 'pending_activation',
           requestedPlan: plan,
@@ -85,7 +82,6 @@ module.exports = async (req, res) => {
         ? 'Solicitação Premium atualizada com sucesso. Aguarde o retorno do desenvolvedor.'
         : 'Solicitação Premium registrada com sucesso. Aguarde o retorno do desenvolvedor.',
       status: 'pending_activation',
-      phone,
       phoneMasked: old.phoneMasked || maskPhone(phone),
       plan,
       months,

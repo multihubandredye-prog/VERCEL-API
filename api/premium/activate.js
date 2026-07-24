@@ -55,7 +55,6 @@ module.exports = async (req, res) => {
     const payload = {
       ...old,
       name: finalName,
-      phone,
       phoneMasked: maskPhone(phone),
       status: 'premium',
       plan: plan || old.plan || (hasValidDays ? `${days} dias` : 'manual'),
@@ -72,7 +71,7 @@ module.exports = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Premium ativado com sucesso.',
-      phone,
+      phoneMasked: payload.phoneMasked,
       status: 'premium',
       days: hasValidDays ? days : undefined,
       months: hasValidDays ? undefined : Number(body.months || body.meses || months),

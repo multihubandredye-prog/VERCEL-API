@@ -1,8 +1,10 @@
 const https = require('https');
+const crypto = require('crypto');
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'projects-general-fed41';
 const FIREBASE_KEY = process.env.FIREBASE_KEY;
 const ADMIN_KEY = process.env.PREMIUM_ADMIN_KEY || process.env.ADMIN_KEY || process.env.REVIEWS_ADMIN_KEY;
+const HASH_SECRET = process.env.PREMIUM_HASH_SECRET;
 const BASE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
 
 function setCors(res) {
@@ -133,8 +135,23 @@ function httpJson(method, url, body) {
   });
 }
 
+function requireHashSecret() {
+  if (!HASH_SECRET || String(HASH_SECRET).length < 16) {
+    throw new Error('PREMIUM_HASH_SECRET não configurado ou muito curto');
+  }
+}
+
+function phoneHash(phone) {
+  const normalized = normalizePhone(phone);
+  requireHashSecret();
+  return crypto
+    .createHmac('sha256', HASH_SECRET)
+    .update(normalized)
+    .digest('hex');
+}
+
 function docIdForPhone(phone) {
-  return normalizePhone(phone);
+  return phoneHash(phone);
 }
 
 async function listUsers() {
@@ -146,18 +163,18 @@ async function listUsers() {
 async function getUserByPhone(phone) {
   const normalized = normalizePhone(phone);
   if (!normalized) return null;
+  const id = docIdForPhone(normalized);
   try {
-    const url = `${BASE_URL}/users/${docIdForPhone(normalized)}?key=${FIREBASE_KEY}`;
+    const url = `${BASE_URL}/users/${id}?key=${FIREBASE_KEY}`;
     const doc = await httpJson('GET', url);
-    if (doc && doc.fields) return { id: docIdForPhone(normalized), data: fromFirestoreFields(doc.fields) };
+    if (doc && doc.fields) return { id, data: fromFirestoreFields(doc.fields || {}) };
   } catch(e) {}
-  const all = await listUsers();
-  return all.find(u => normalizePhone(u.data.phone) === normalized) || null;
+  return null;
 }
 
 async function saveUser(phone, payload) {
   const id = docIdForPhone(phone);
-  const fieldsToDelete = ['nome', 'created_at', 'pendingStatus', 'expiration', 'expiracao', 'plano', 'pendingRequest'];
+  const fieldsToDelete = ['phone', 'nome', 'created_at', 'pendingStatus', 'expiration', 'expiracao', 'plano', 'pendingRequest'];
   const maskFields = Array.from(new Set([...Object.keys(payload || {}), ...fieldsToDelete]));
   const updateMask = maskFields.map(f => `updateMask.fieldPaths=${encodeURIComponent(f)}`).join('&');
   const url = `${BASE_URL}/users/${id}?key=${FIREBASE_KEY}${updateMask ? `&${updateMask}` : ''}`;
@@ -184,6 +201,7 @@ function getPlanAmount(plan, amount) {
 function cleanUserData(raw = {}) {
   const copy = { ...(raw || {}) };
   // Campos antigos/duplicados que não devem ser mantidos no documento canônico.
+  delete copy.phone;
   delete copy.nome;
   delete copy.created_at;
   delete copy.pendingStatus;
@@ -291,6 +309,7 @@ module.exports = {
   setCors,
   normalizePhone,
   maskPhone,
+  phoneHash,
   todayYmd,
   nowBrazil,
   addDaysYmd,

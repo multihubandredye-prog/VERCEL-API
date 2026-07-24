@@ -1,4 +1,4 @@
-const { setCors, readBody, normalizePhone, getUserByPhone, saveUser, isAdminRequest, todayYmd, cleanUserData } = require('../_premium');
+const { setCors, readBody, normalizePhone, maskPhone, getUserByPhone, saveUser, isAdminRequest, todayYmd, cleanUserData } = require('../_premium');
 
 module.exports = async (req, res) => {
   setCors(res);
@@ -17,14 +17,14 @@ module.exports = async (req, res) => {
     const now = new Date().toISOString();
     const payload = {
       ...old,
-      phone,
+      phoneMasked: old.phoneMasked || maskPhone(phone),
       status: 'cancelled',
       cancelledAt: now,
       updatedAt: now,
       project_expiration: body.expiration || body.expiracao || todayYmd()
     };
     await saveUser(phone, payload);
-    return res.status(200).json({ success: true, message: 'Premium cancelado com sucesso.', phone, status: 'cancelled' });
+    return res.status(200).json({ success: true, message: 'Premium cancelado com sucesso.', phoneMasked: payload.phoneMasked, status: 'cancelled' });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message || 'Erro ao cancelar Premium' });
   }

@@ -1,4 +1,4 @@
-const { setCors, normalizePhone, getUserByPhone, isAdminRequest, publicStatusFromUser } = require('../_premium');
+const { setCors, normalizePhone, maskPhone, getUserByPhone, isAdminRequest, publicStatusFromUser } = require('../_premium');
 
 module.exports = async (req, res) => {
   setCors(res);
@@ -9,7 +9,7 @@ module.exports = async (req, res) => {
     const phone = normalizePhone(req.query.phone);
     if (!phone) return res.status(400).json({ success: false, error: 'Número obrigatório' });
     const user = await getUserByPhone(phone);
-    return res.status(200).json({ success: true, phone, publicStatus: publicStatusFromUser(user), user: user ? user.data : null });
+    return res.status(200).json({ success: true, phoneMasked: maskPhone(phone), documentId: user ? user.id : null, publicStatus: publicStatusFromUser(user), user: user ? user.data : null });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message || 'Erro ao consultar usuário' });
   }

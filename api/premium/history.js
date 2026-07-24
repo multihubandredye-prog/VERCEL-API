@@ -15,7 +15,6 @@ module.exports = async (req, res) => {
     if (!user) {
       return res.status(200).json({
         success: true,
-        phone,
         status: 'teste',
         history: [],
         requests: []
@@ -61,7 +60,6 @@ module.exports = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      phone,
       phoneMasked: data.phoneMasked || '',
       name: data.name || '',
       status: publicStatus.status,

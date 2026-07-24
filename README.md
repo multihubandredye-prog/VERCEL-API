@@ -27,6 +27,7 @@ Configure na Vercel:
 FIREBASE_KEY=SUA_FIREBASE_WEB_API_KEY
 FIREBASE_PROJECT_ID=projects-general-fed41
 PREMIUM_ADMIN_KEY=SUA_CHAVE_ADMINISTRATIVA_FORTE
+PREMIUM_HASH_SECRET=SUA_CHAVE_GRANDE_PARA_HASH_HMAC
 ```
 
 `PREMIUM_ADMIN_KEY` é obrigatória para endpoints administrativos.
@@ -46,12 +47,78 @@ PREMIUM_ADMIN_KEY
 
 ---
 
+
+## Privacidade do telefone
+
+A API não usa mais o telefone completo como ID do documento no Firebase.
+
+O app/Tasker ainda envia o número para a API via HTTPS, por exemplo:
+
+```txt
+558197573129
+```
+
+A API normaliza esse número e gera um identificador seguro usando HMAC-SHA256:
+
+```txt
+HMAC-SHA256(phone, PREMIUM_HASH_SECRET)
+```
+
+Esse hash vira o ID do documento:
+
+```txt
+users/{phoneHash}
+```
+
+Exemplo conceitual:
+
+```txt
+users/9cbf1b72c6e01db7c5...e4a91
+```
+
+Dentro do documento, a API não salva o telefone completo. Ela salva apenas o número mascarado:
+
+```json
+{
+  "phoneMasked": "5581****3129"
+}
+```
+
+### Variável obrigatória
+
+Configure na Vercel:
+
+```env
+PREMIUM_HASH_SECRET=uma_chave_longa_e_secreta
+```
+
+Recomendações:
+
+- use uma chave longa;
+- não compartilhe essa chave;
+- não coloque essa chave no front-end;
+- não altere essa chave depois que houver clientes reais, porque os hashes mudariam e a API não encontraria os documentos antigos.
+
+### Importante
+
+Como a migração agora é completa, a API não procura mais documentos antigos com ID igual ao telefone.
+
+Ou seja, documentos antigos como:
+
+```txt
+users/558197573129
+```
+
+não serão mais usados pelo fluxo novo.
+
+---
+
 ## Modelo do documento no Firestore
 
 Documento recomendado:
 
 ```txt
-users/{phone}
+users/{phoneHash}
 ```
 
 A API salva o cadastro Premium com os campos atuais abaixo.
@@ -61,7 +128,6 @@ Exemplo de usuário Premium ativo:
 ```json
 {
   "name": "Andredye Oliveira Melo",
-  "phone": "558197573129",
   "phoneMasked": "5581****3129",
   "status": "premium",
   "plan": "1 mês",
@@ -89,8 +155,8 @@ Exemplo de usuário Premium ativo:
 | Campo | Descrição |
 |---|---|
 | `name` | Nome do usuário/cliente |
-| `phone` | Número normalizado usado como identificador principal |
-| `phoneMasked` | Número mascarado para exibição administrativa |
+| `phoneHash` | Não é salvo como campo; é o ID do documento gerado por HMAC-SHA256 |
+| `phoneMasked` | Número mascarado para exibição administrativa; o telefone completo não é salvo |
 | `status` | Estado atual: `pending_activation`, `premium`, `cancelled` ou outros estados operacionais |
 | `plan` | Plano/descrição informada na ativação ou solicitação |
 | `project_expiration` | Data final da assinatura Premium no formato `yyyy-MM-dd` |
@@ -187,6 +253,9 @@ curl "https://wca-api-three-alpha.vercel.app/api?phone=558197573129"
 
 ---
 
+
+> Observação: o campo `phone` aparece nos exemplos de requisição porque a API precisa receber o número para calcular o hash. Ele não é salvo completo no Firebase.
+
 ## 2. Solicitar Premium pelo app
 
 Endpoint público. O usuário pode chamar este endpoint pelo app.
@@ -235,7 +304,6 @@ Resposta:
   "success": true,
   "message": "Solicitação Premium registrada com sucesso. Aguarde o retorno do desenvolvedor.",
   "status": "pending_activation",
-  "phone": "558197573129",
   "phoneMasked": "5581****3129",
   "plan": "1 mês",
   "months": 1,
@@ -349,7 +417,7 @@ Resposta:
 {
   "success": true,
   "message": "Premium ativado com sucesso.",
-  "phone": "558197573129",
+  "phoneMasked": "5581****3129",
   "status": "premium",
   "expiration": "2026-08-23",
   "expiracao": "2026-08-23"
@@ -676,7 +744,6 @@ Quando você chama `/api/premium/activate`, a API atualiza o documento do usuár
 ```json
 {
   "name": "Andredye Oliveira Melo",
-  "phone": "558197573129",
   "phoneMasked": "5581****3129",
   "status": "premium",
   "project_expiration": "2026-08-27",
@@ -738,7 +805,7 @@ Resposta:
 {
   "success": true,
   "message": "Premium ativado com sucesso.",
-  "phone": "558197573129",
+  "phoneMasked": "5581****3129",
   "status": "premium",
   "days": 35,
   "expiration": "2026-08-27"
@@ -897,8 +964,8 @@ Resposta de sucesso:
 {
   "success": true,
   "message": "Usuário Premium removido com sucesso.",
-  "phone": "558197573129",
-  "documentId": "558197573129",
+  "phoneMasked": "5581****3129",
+  "documentId": "HASH_DO_TELEFONE",
   "deleted": true
 }
 ```
@@ -960,7 +1027,6 @@ Resposta:
 ```json
 {
   "success": true,
-  "phone": "558197573129",
   "phoneMasked": "5581****3129",
   "name": "Andredye Oliveira Melo",
   "status": "premium",

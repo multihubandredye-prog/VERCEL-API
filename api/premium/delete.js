@@ -1,4 +1,4 @@
-const { setCors, readBody, normalizePhone, deleteUserByPhone, isAdminRequest } = require('../_premium');
+const { setCors, readBody, normalizePhone, maskPhone, deleteUserByPhone, isAdminRequest } = require('../_premium');
 
 module.exports = async (req, res) => {
   setCors(res);
@@ -25,14 +25,14 @@ module.exports = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: 'Usuário não encontrado',
-        phone
+        phoneMasked: maskPhone(phone)
       });
     }
 
     return res.status(200).json({
       success: true,
       message: 'Usuário Premium removido com sucesso.',
-      phone,
+      phoneMasked: maskPhone(phone),
       documentId: result.id,
       deleted: true
     });
