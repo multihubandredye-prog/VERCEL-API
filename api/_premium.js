@@ -190,6 +190,17 @@ function cleanUserData(raw = {}) {
   return copy;
 }
 
+
+async function deleteUserByPhone(phone) {
+  const normalized = normalizePhone(phone);
+  if (!normalized) return { deleted: false, found: false, id: '' };
+  const user = await getUserByPhone(normalized);
+  if (!user || !user.id) return { deleted: false, found: false, id: '' };
+  const url = `${BASE_URL}/users/${user.id}?key=${FIREBASE_KEY}`;
+  await httpJson('DELETE', url);
+  return { deleted: true, found: true, id: user.id };
+}
+
 function publicStatusFromUser(user) {
   if (!user) return { status: 'teste', plano: 'teste', tipo: 'evaluation', modo: 'TESTE' };
   const d = user.data || user;
@@ -254,6 +265,7 @@ module.exports = {
   getPlanAmount,
   getUserByPhone,
   saveUser,
+  deleteUserByPhone,
   listUsers,
   isAdminRequest,
   publicStatusFromUser,

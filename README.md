@@ -813,6 +813,91 @@ curl "https://wca-api-three-alpha.vercel.app/api/premium/user?phone=558197573129
 
 ---
 
+
+
+## Excluir usuário Premium completamente
+
+Endpoint administrativo para remover completamente o documento do usuário da coleção `users` no Firebase.
+
+Use este endpoint quando quiser apagar um cadastro de teste, solicitação errada, lixo ou usuário que não deve manter histórico.
+
+> Para clientes reais, normalmente é melhor usar `/api/premium/cancel`, porque cancelar mantém histórico de pagamentos. O delete remove o documento.
+
+### Opção 1 — POST
+
+```http
+POST /api/premium/delete
+x-admin-key: SUA_CHAVE_ADMIN
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "phone": "558197573129"
+}
+```
+
+Exemplo:
+
+```bash
+curl -X POST "https://wca-api-three-alpha.vercel.app/api/premium/delete" \
+  -H "x-admin-key: SUA_CHAVE_ADMIN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "phone": "558197573129"
+  }'
+```
+
+Resposta de sucesso:
+
+```json
+{
+  "success": true,
+  "message": "Usuário Premium removido com sucesso.",
+  "phone": "558197573129",
+  "documentId": "558197573129",
+  "deleted": true
+}
+```
+
+### Opção 2 — DELETE
+
+```bash
+curl -X DELETE "https://wca-api-three-alpha.vercel.app/api/premium/delete?phone=558197573129" \
+  -H "x-admin-key: SUA_CHAVE_ADMIN"
+```
+
+### Possíveis erros
+
+Usuário não encontrado:
+
+```json
+{
+  "success": false,
+  "error": "Usuário não encontrado",
+  "phone": "558197573129"
+}
+```
+
+Chave administrativa inválida:
+
+```json
+{
+  "success": false,
+  "error": "Chave administrativa inválida"
+}
+```
+
+### Diferença entre cancelar e excluir
+
+| Ação | Endpoint | Resultado |
+|---|---|---|
+| Cancelar | `/api/premium/cancel` | Mantém o documento e histórico, muda `status` para `cancelled` |
+| Excluir | `/api/premium/delete` | Remove completamente o documento do Firebase |
+
+
 ## Fluxo completo manual
 
 ```txt
