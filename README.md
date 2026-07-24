@@ -753,6 +753,47 @@ expiration/expiracao > days/dias > months/meses
 
 Se o usuário ainda tiver Premium ativo, os dias são somados a partir da data de expiração atual. Se estiver vencido ou sem Premium, os dias contam a partir de hoje.
 
+
+
+### Limpeza automática de `pendingRequest` após ativar
+
+Quando existe uma solicitação pendente em `pendingRequest` e o administrador confirma o pagamento usando `/api/premium/activate`, a API faz automaticamente:
+
+1. copia os dados da solicitação para dentro do novo item em `payments[].fromRequest`;
+2. adiciona a ativação/renovação no histórico `payments`;
+3. remove o campo `pendingRequest` do documento principal.
+
+Isso evita que o usuário continue vendo uma solicitação pendente depois que o Premium já foi ativado/renovado.
+
+Exemplo de pagamento salvo após ativação:
+
+```json
+{
+  "date": "2026-07-24T06:30:00.000Z",
+  "periodStart": "2027-07-24",
+  "periodEnd": "2027-08-28",
+  "days": 35,
+  "months": 0,
+  "amount": "35",
+  "method": "pix",
+  "note": "Renovação confirmada",
+  "fromRequest": {
+    "requestedPlan": "1 mês",
+    "requestedMonths": 1,
+    "requestedAmount": "R$ 35,00",
+    "lastRequestAt": "2026-07-24T06:08:40.325Z",
+    "lastRequestAtBR": "24/07/2026, 03:08:40"
+  }
+}
+```
+
+Depois da ativação, o documento principal não fica mais com:
+
+```json
+"pendingRequest": {}
+```
+
+
 ## 5. Cancelar Premium
 
 Endpoint administrativo.

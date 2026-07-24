@@ -1,4 +1,4 @@
-const { setCors, readBody, normalizePhone, maskPhone, inferMonths, getPlanAmount, getUserByPhone, saveUser, isAdminRequest, addDaysYmd, addMonthsYmd, isFutureOrToday, todayYmd, cleanUserData } = require('../_premium');
+const { setCors, readBody, normalizePhone, maskPhone, inferMonths, getPlanAmount, getUserByPhone, saveUser, isAdminRequest, addDaysYmd, addMonthsYmd, isFutureOrToday, todayYmd, cleanUserData, normalizePendingRequest } = require('../_premium');
 
 module.exports = async (req, res) => {
   setCors(res);
@@ -22,6 +22,8 @@ module.exports = async (req, res) => {
 
     const existing = await getUserByPhone(phone);
     const old = cleanUserData(existing ? existing.data : {});
+    const pendingRequest = normalizePendingRequest(old);
+    delete old.pendingRequest;
     const hasActiveExpiration = isFutureOrToday(old.project_expiration);
     const baseExpiration = hasActiveExpiration ? old.project_expiration : todayYmd();
     const periodStart = baseExpiration;
@@ -39,7 +41,14 @@ module.exports = async (req, res) => {
       months: hasValidDays ? 0 : Number(body.months || body.meses || months),
       amount,
       method: body.method || body.metodo || 'manual',
-      note: body.note || body.observacao || ''
+      note: body.note || body.observacao || '',
+      fromRequest: pendingRequest ? {
+        requestedPlan: pendingRequest.requestedPlan || '',
+        requestedMonths: pendingRequest.requestedMonths || '',
+        requestedAmount: pendingRequest.requestedAmount || '',
+        lastRequestAt: pendingRequest.lastRequestAt || '',
+        lastRequestAtBR: pendingRequest.lastRequestAtBR || ''
+      } : {}
     };
     const payments = Array.isArray(old.payments) ? [...old.payments, payment] : [payment];
 
@@ -69,6 +78,7 @@ module.exports = async (req, res) => {
       months: hasValidDays ? undefined : Number(body.months || body.meses || months),
       expiration,
       expiracao: expiration,
+      pendingRequestCleared: !!pendingRequest,
       user: payload
     });
   } catch (err) {
