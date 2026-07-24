@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
       return res.status(200).json({
         success: true,
         alreadyPending: true,
-        message: 'Já existe uma solicitação Premium pendente para este número. Aguarde o contato do desenvolvedor.',
+        message: 'Já existe uma solicitação Premium pendente para este número. Aguarde o retorno do desenvolvedor.',
         status: 'pending_activation',
         phone,
         phoneMasked: old.phoneMasked || maskPhone(phone),
@@ -59,8 +59,8 @@ module.exports = async (req, res) => {
       success: true,
       updated: updatePending,
       message: updatePending
-        ? 'Solicitação Premium atualizada com sucesso. Aguarde a confirmação do pagamento.'
-        : 'Solicitação Premium registrada com sucesso. Aguarde a confirmação do pagamento.',
+        ? 'Solicitação Premium atualizada com sucesso. Aguarde o retorno do desenvolvedor.'
+        : 'Solicitação Premium registrada com sucesso. Aguarde o retorno do desenvolvedor.',
       status: payload.status,
       phone,
       phoneMasked: payload.phoneMasked,

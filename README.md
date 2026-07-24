@@ -233,7 +233,7 @@ Resposta:
 ```json
 {
   "success": true,
-  "message": "Solicitação Premium registrada com sucesso. Aguarde a confirmação do pagamento.",
+  "message": "Solicitação Premium registrada com sucesso. Aguarde o retorno do desenvolvedor.",
   "status": "pending_activation",
   "phone": "558197573129",
   "phoneMasked": "5581****3129",
