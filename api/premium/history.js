@@ -39,14 +39,23 @@ module.exports = async (req, res) => {
     }));
 
     const requests = [];
-    if (data.lastRequestAt || data.lastRequestAtBR || data.requestedPlan) {
+    if (data.pendingRequest && String(data.pendingRequest.status || '').toLowerCase() === 'pending_activation') {
+      requests.push({
+        requestedAt: data.pendingRequest.lastRequestAt || '',
+        requestedAtBR: data.pendingRequest.lastRequestAtBR || '',
+        plan: data.pendingRequest.requestedPlan || '',
+        months: data.pendingRequest.requestedMonths || '',
+        amount: data.pendingRequest.requestedAmount || '',
+        status: 'pending_activation'
+      });
+    } else if (data.lastRequestAt || data.lastRequestAtBR || data.requestedPlan) {
       requests.push({
         requestedAt: data.lastRequestAt || '',
         requestedAtBR: data.lastRequestAtBR || '',
         plan: data.requestedPlan || '',
         months: data.requestedMonths || '',
         amount: data.requestedAmount || '',
-        status: data.status || ''
+        status: data.status === 'premium' ? 'pending_activation' : (data.status || '')
       });
     }
 

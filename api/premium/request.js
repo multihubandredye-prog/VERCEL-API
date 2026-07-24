@@ -1,4 +1,4 @@
-const { setCors, readBody, normalizePhone, maskPhone, inferMonths, getPlanAmount, getUserByPhone, saveUser, publicStatusFromUser, cleanUserData, nowBrazil } = require('../_premium');
+const { setCors, readBody, normalizePhone, maskPhone, inferMonths, getPlanAmount, getUserByPhone, saveUser, publicStatusFromUser, cleanUserData, nowBrazil, normalizePendingRequest } = require('../_premium');
 
 module.exports = async (req, res) => {
   setCors(res);
@@ -18,11 +18,14 @@ module.exports = async (req, res) => {
     if (!name || name.length < 2) return res.status(400).json({ success: false, error: 'Nome obrigatório' });
 
     const now = new Date().toISOString();
+    const nowBR = nowBrazil();
     const existing = await getUserByPhone(phone);
     const publicStatus = publicStatusFromUser(existing);
     const old = cleanUserData(existing ? existing.data : {});
+    const currentPending = normalizePendingRequest(old);
+    const isPremiumActive = publicStatus.status === 'premium';
 
-    if (String(old.status || '').toLowerCase() === 'pending_activation' && !updatePending) {
+    if (currentPending && !updatePending) {
       return res.status(200).json({
         success: true,
         alreadyPending: true,
@@ -30,29 +33,52 @@ module.exports = async (req, res) => {
         status: 'pending_activation',
         phone,
         phoneMasked: old.phoneMasked || maskPhone(phone),
-        plan: old.requestedPlan || plan,
-        months: old.requestedMonths || months,
-        amount: old.requestedAmount || amount,
-        lastRequestAt: old.lastRequestAt || '',
-        lastRequestAtBR: old.lastRequestAtBR || old.requestedAtBR || ''
+        plan: currentPending.requestedPlan || plan,
+        months: currentPending.requestedMonths || months,
+        amount: currentPending.requestedAmount || amount,
+        lastRequestAt: currentPending.lastRequestAt || '',
+        lastRequestAtBR: currentPending.lastRequestAtBR || ''
       });
     }
 
-    const payload = {
-      ...old,
+    const pendingRequest = {
+      status: 'pending_activation',
       name,
       phone,
-      phoneMasked: maskPhone(phone),
-      status: publicStatus.status === 'premium' ? 'premium' : 'pending_activation',
+      phoneMasked: old.phoneMasked || maskPhone(phone),
       requestedPlan: plan,
       requestedMonths: months,
       requestedAmount: amount,
       lastRequestAt: now,
-      lastRequestAtBR: nowBrazil(),
-      updatedAt: now,
-      createdAt: old.createdAt || now,
-      source: 'wca-app'
+      lastRequestAtBR: nowBR
     };
+
+    const payload = isPremiumActive
+      ? {
+          ...old,
+          name: old.name || name,
+          phone,
+          phoneMasked: old.phoneMasked || maskPhone(phone),
+          status: 'premium',
+          pendingRequest,
+          updatedAt: now,
+          source: old.source || 'wca-app'
+        }
+      : {
+          ...old,
+          name,
+          phone,
+          phoneMasked: maskPhone(phone),
+          status: 'pending_activation',
+          requestedPlan: plan,
+          requestedMonths: months,
+          requestedAmount: amount,
+          lastRequestAt: now,
+          lastRequestAtBR: nowBR,
+          updatedAt: now,
+          createdAt: old.createdAt || now,
+          source: 'wca-app'
+        };
 
     await saveUser(phone, payload);
     return res.status(200).json({
@@ -61,14 +87,14 @@ module.exports = async (req, res) => {
       message: updatePending
         ? 'Solicitação Premium atualizada com sucesso. Aguarde o retorno do desenvolvedor.'
         : 'Solicitação Premium registrada com sucesso. Aguarde o retorno do desenvolvedor.',
-      status: payload.status,
+      status: 'pending_activation',
       phone,
-      phoneMasked: payload.phoneMasked,
+      phoneMasked: pendingRequest.phoneMasked,
       plan,
       months,
       amount,
-      lastRequestAt: payload.lastRequestAt,
-      lastRequestAtBR: payload.lastRequestAtBR
+      lastRequestAt: pendingRequest.lastRequestAt,
+      lastRequestAtBR: pendingRequest.lastRequestAtBR
     });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message || 'Erro ao registrar solicitação Premium' });

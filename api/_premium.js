@@ -201,23 +201,55 @@ async function deleteUserByPhone(phone) {
   return { deleted: true, found: true, id: user.id };
 }
 
+
+function normalizePendingRequest(data = {}) {
+  const pr = data.pendingRequest && typeof data.pendingRequest === 'object' ? data.pendingRequest : null;
+  if (pr && String(pr.status || '').toLowerCase() === 'pending_activation') {
+    return {
+      status: 'pending_activation',
+      requestedPlan: pr.requestedPlan || '',
+      requestedMonths: pr.requestedMonths || '',
+      requestedAmount: pr.requestedAmount || '',
+      lastRequestAt: pr.lastRequestAt || '',
+      lastRequestAtBR: pr.lastRequestAtBR || '',
+      name: pr.name || data.name || ''
+    };
+  }
+  if (String(data.status || '').toLowerCase() === 'pending_activation') {
+    return {
+      status: 'pending_activation',
+      requestedPlan: data.requestedPlan || '',
+      requestedMonths: data.requestedMonths || '',
+      requestedAmount: data.requestedAmount || '',
+      lastRequestAt: data.lastRequestAt || '',
+      lastRequestAtBR: data.lastRequestAtBR || data.requestedAtBR || '',
+      name: data.name || ''
+    };
+  }
+  return null;
+}
+
 function publicStatusFromUser(user) {
   if (!user) return { status: 'teste', plano: 'teste', tipo: 'evaluation', modo: 'TESTE' };
   const d = user.data || user;
   const expiration = d.project_expiration || d.expiration || '';
   const status = String(d.status || '').toLowerCase();
   const name = d.name || d.nome || 'Teste';
+  const pendingRequest = normalizePendingRequest(d);
+
+  const withPending = (payload) => pendingRequest ? { ...payload, pendingRequest } : payload;
 
   if (status === 'premium' && isFutureOrToday(expiration)) {
-    return { nome: name, expiracao: expiration, status: 'premium', plano: 'premium', tipo: 'premium', modo: 'PREMIUM' };
+    return withPending({ nome: name, expiracao: expiration, status: 'premium', plano: 'premium', tipo: 'premium', modo: 'PREMIUM' });
   }
   if (status === 'premium' && expiration && !isFutureOrToday(expiration)) {
-    return { nome: name, expiracao: expiration, status: 'expired', plano: 'premium', tipo: 'expired', modo: 'PREMIUM', expired: true };
+    return withPending({ nome: name, expiracao: expiration, status: 'expired', plano: 'premium', tipo: 'expired', modo: 'PREMIUM', expired: true });
   }
   if (status === 'expired') {
-    return { nome: name, expiracao: expiration, status: 'expired', plano: 'premium', tipo: 'expired', modo: 'PREMIUM', expired: true };
+    return withPending({ nome: name, expiracao: expiration, status: 'expired', plano: 'premium', tipo: 'expired', modo: 'PREMIUM', expired: true });
   }
   if (status === 'pending_activation') {
+    const pr = pendingRequest || {};
     return {
       nome: name,
       status: 'pending_activation',
@@ -225,17 +257,17 @@ function publicStatusFromUser(user) {
       tipo: 'pending_activation',
       modo: 'TESTE',
       pending: true,
-      requestedPlan: d.requestedPlan || '',
-      requestedMonths: d.requestedMonths || '',
-      requestedAmount: d.requestedAmount || '',
-      lastRequestAt: d.lastRequestAt || '',
-      lastRequestAtBR: d.lastRequestAtBR || d.requestedAtBR || ''
+      requestedPlan: pr.requestedPlan || d.requestedPlan || '',
+      requestedMonths: pr.requestedMonths || d.requestedMonths || '',
+      requestedAmount: pr.requestedAmount || d.requestedAmount || '',
+      lastRequestAt: pr.lastRequestAt || d.lastRequestAt || '',
+      lastRequestAtBR: pr.lastRequestAtBR || d.lastRequestAtBR || d.requestedAtBR || ''
     };
   }
   if (status === 'cancelled') {
-    return { nome: name, status: 'cancelled', plano: 'teste', tipo: 'cancelled', modo: 'TESTE' };
+    return withPending({ nome: name, status: 'cancelled', plano: 'teste', tipo: 'cancelled', modo: 'TESTE' });
   }
-  return { status: 'teste', plano: 'teste', tipo: 'evaluation', modo: 'TESTE' };
+  return withPending({ status: 'teste', plano: 'teste', tipo: 'evaluation', modo: 'TESTE' });
 }
 
 async function readBody(req) {
@@ -269,6 +301,7 @@ module.exports = {
   listUsers,
   isAdminRequest,
   publicStatusFromUser,
+  normalizePendingRequest,
   cleanUserData,
   readBody
 };
