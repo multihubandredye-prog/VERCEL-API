@@ -22,7 +22,9 @@ module.exports = async (req, res) => {
 
     const existing = await getUserByPhone(phone);
     const old = cleanUserData(existing ? existing.data : {});
-    const baseExpiration = isFutureOrToday(old.project_expiration) ? old.project_expiration : todayYmd();
+    const hasActiveExpiration = isFutureOrToday(old.project_expiration);
+    const baseExpiration = hasActiveExpiration ? old.project_expiration : todayYmd();
+    const periodStart = baseExpiration;
     const expiration = body.expiration || body.expiracao || (hasValidDays
       ? addDaysYmd(baseExpiration, days)
       : addMonthsYmd(baseExpiration, body.months || body.meses || months));
@@ -31,6 +33,8 @@ module.exports = async (req, res) => {
 
     const payment = {
       date: now,
+      periodStart,
+      periodEnd: expiration,
       days: hasValidDays ? days : 0,
       months: hasValidDays ? 0 : Number(body.months || body.meses || months),
       amount,

@@ -898,6 +898,72 @@ Chave administrativa inválida:
 | Excluir | `/api/premium/delete` | Remove completamente o documento do Firebase |
 
 
+
+
+## Histórico Premium do usuário
+
+Endpoint público para o app consultar o histórico Premium do próprio número conectado.
+
+```http
+GET /api/premium/history?phone=558197573129
+```
+
+Exemplo:
+
+```bash
+curl "https://wca-api-three-alpha.vercel.app/api/premium/history?phone=558197573129"
+```
+
+Resposta:
+
+```json
+{
+  "success": true,
+  "phone": "558197573129",
+  "phoneMasked": "5581****3129",
+  "name": "Andredye Oliveira Melo",
+  "status": "premium",
+  "currentExpiration": "2026-08-27",
+  "history": [
+    {
+      "index": 1,
+      "activatedAt": "2026-07-23T22:00:00.000Z",
+      "periodStart": "2026-07-23",
+      "periodEnd": "2026-08-27",
+      "days": 35,
+      "months": 0,
+      "amount": "35",
+      "method": "pix",
+      "note": "Plano de 30 dias com 5 dias adicionais"
+    }
+  ],
+  "requests": [
+    {
+      "requestedAt": "2026-07-23T21:50:00.000Z",
+      "requestedAtBR": "23/07/2026, 18:50:00",
+      "plan": "1 mês",
+      "months": 1,
+      "amount": "35",
+      "status": "premium"
+    }
+  ]
+}
+```
+
+### Campos do histórico
+
+| Campo | Descrição |
+|---|---|
+| `activatedAt` | Data/hora em que o administrador ativou/renovou o Premium |
+| `periodStart` | Data inicial considerada para aquele período |
+| `periodEnd` | Data final daquele período |
+| `days` | Quantidade de dias liberada, quando ativado por dias |
+| `months` | Quantidade de meses, quando usado modo antigo por meses |
+| `amount` | Valor informado pelo administrador |
+| `method` | Método de pagamento informado, exemplo `pix` |
+| `note` | Observação administrativa salva na ativação |
+
+
 ## Fluxo completo manual
 
 ```txt
