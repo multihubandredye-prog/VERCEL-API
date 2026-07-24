@@ -157,7 +157,10 @@ async function getUserByPhone(phone) {
 
 async function saveUser(phone, payload) {
   const id = docIdForPhone(phone);
-  const url = `${BASE_URL}/users/${id}?key=${FIREBASE_KEY}`;
+  const fieldsToDelete = ['nome', 'created_at', 'pendingStatus', 'expiration', 'expiracao', 'plano'];
+  const maskFields = Array.from(new Set([...Object.keys(payload || {}), ...fieldsToDelete]));
+  const updateMask = maskFields.map(f => `updateMask.fieldPaths=${encodeURIComponent(f)}`).join('&');
+  const url = `${BASE_URL}/users/${id}?key=${FIREBASE_KEY}${updateMask ? `&${updateMask}` : ''}`;
   const doc = makeDocument(payload);
   await httpJson('PATCH', url, doc);
   return { id, data: payload };

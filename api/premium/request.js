@@ -43,9 +43,6 @@ module.exports = async (req, res) => {
 
     const pendingRequest = {
       status: 'pending_activation',
-      name,
-      phone,
-      phoneMasked: old.phoneMasked || maskPhone(phone),
       requestedPlan: plan,
       requestedMonths: months,
       requestedAmount: amount,
@@ -56,7 +53,7 @@ module.exports = async (req, res) => {
     const payload = isPremiumActive
       ? {
           ...old,
-          name: old.name || name,
+          name,
           phone,
           phoneMasked: old.phoneMasked || maskPhone(phone),
           status: 'premium',
@@ -89,7 +86,7 @@ module.exports = async (req, res) => {
         : 'Solicitação Premium registrada com sucesso. Aguarde o retorno do desenvolvedor.',
       status: 'pending_activation',
       phone,
-      phoneMasked: pendingRequest.phoneMasked,
+      phoneMasked: old.phoneMasked || maskPhone(phone),
       plan,
       months,
       amount,
